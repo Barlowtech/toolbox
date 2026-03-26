@@ -687,6 +687,19 @@ function waitForToolbox() {
   });
 }
 
+/**
+ * Unwrap the server's response envelope.
+ * Server returns: { status, run_id, result: { message, data, ... } }
+ * We want the inner `result` object so UI code can use res.message / res.data directly.
+ * Also handles error responses (status 500 returns { error, traceback }).
+ */
+async function runTool(params) {
+  const raw = await Toolbox.run(params);
+  if (raw.result) return raw.result;          // normal: unwrap
+  if (raw.error) return { message: `Error: ${raw.error}` };  // server 500
+  return raw;                                  // fallback: pass-through
+}
+
 // ─── Provider display names ───
 const PROVIDER_NAMES = {
   'anthropic': 'Anthropic',
@@ -713,7 +726,7 @@ async function init() {
 
   // Load models
   try {
-    const res = await Toolbox.run({ action: 'list_models' });
+    const res = await runTool({ action: 'list_models' });
     if (res.data && Array.isArray(res.data)) {
       models = res.data;
       document.getElementById('modelCountBadge').textContent = `(${models.length} models)`;
@@ -769,7 +782,7 @@ async function retryLoadModels() {
   document.getElementById('modelLoading').style.display = '';
   document.getElementById('modelLoading').innerHTML = 'Loading models...';
   try {
-    const res = await Toolbox.run({ action: 'list_models' });
+    const res = await runTool({ action: 'list_models' });
     if (res.data && Array.isArray(res.data)) {
       models = res.data;
       document.getElementById('modelCountBadge').textContent = `(${models.length} models)`;
@@ -1014,12 +1027,12 @@ async function handleRun() {
     let res;
     if (mode === 'single') {
       params.action = 'process';
-      res = await Toolbox.run(params);
+      res = await runTool(params);
       handleSingleResult(res);
     } else {
       params.action = 'conversation';
       params.conversation_history = JSON.stringify(conversationHistory);
-      res = await Toolbox.run(params);
+      res = await runTool(params);
       handleConversationResult(res, instruction);
     }
   } catch (e) {
@@ -1154,7 +1167,7 @@ function copyText(text) {
 async function saveResult() {
   if (!lastResultText || !Toolbox) return;
   try {
-    const res = await Toolbox.run({
+    const res = await runTool({
       action: 'save',
       result_text: lastResultText,
       model: selectedModel,

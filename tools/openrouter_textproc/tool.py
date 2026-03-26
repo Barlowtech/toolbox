@@ -156,10 +156,10 @@ def list_models(context: dict) -> dict:
 
     models.sort(key=lambda x: x["name"].lower())
 
-    # Write cache
+    # Write cache (may fail on some filesystems — non-critical)
     try:
         with open(MODELS_CACHE_FILE, "w") as f:
-            json.dump(models, f)
+            json.dump(models, f, indent=0)
     except Exception:
         pass  # non-critical
 
