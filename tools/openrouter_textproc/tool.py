@@ -140,12 +140,20 @@ def list_models(context: dict) -> dict:
         if "text" not in modality_out.split("->")[-1]:
             continue
 
+        model_id = m["id"]
+        provider = model_id.split("/")[0] if "/" in model_id else "other"
+        top = m.get("top_provider", {})
+
         models.append({
-            "id": m["id"],
-            "name": m.get("name", m["id"]),
+            "id": model_id,
+            "name": m.get("name", model_id),
+            "provider": provider,
             "context_length": m.get("context_length", 0),
+            "max_completion": top.get("max_completion_tokens", 0),
+            "modality": arch.get("modality", "text->text"),
             "pricing_prompt": m.get("pricing", {}).get("prompt", "0"),
             "pricing_completion": m.get("pricing", {}).get("completion", "0"),
+            "description": (m.get("description") or "")[:200],
         })
 
     models.sort(key=lambda x: x["name"].lower())

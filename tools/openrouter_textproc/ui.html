@@ -86,14 +86,14 @@ body {
   position: relative;
 }
 .model-search-wrap input[type="text"] {
-  min-width: 280px;
+  min-width: 360px;
 }
 .model-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
-  max-height: 300px;
+  width: 520px;
+  max-height: 420px;
   overflow-y: auto;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -102,19 +102,92 @@ body {
   display: none;
 }
 .model-dropdown.open { display: block; }
+
+.provider-group-header {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-magenta);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.provider-group-header:first-child { border-top: none; }
+.provider-group-header .provider-count {
+  color: var(--text-secondary);
+  font-size: 9px;
+  margin-left: 6px;
+}
+
 .model-option {
-  padding: 6px 10px;
+  padding: 7px 10px 7px 16px;
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 2px;
   font-size: 12px;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
 }
-.model-option:hover, .model-option.selected {
+.model-option:hover {
+  background: rgba(0, 229, 255, 0.1);
+  border-left-color: var(--accent-cyan);
+}
+.model-option.selected {
   background: rgba(0, 229, 255, 0.15);
+  border-left-color: var(--accent-cyan);
+}
+
+.model-option .model-name {
+  font-weight: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.model-option .model-id {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .model-option .model-meta {
-  color: var(--text-secondary);
+  display: flex;
+  gap: 10px;
   font-size: 10px;
+  color: var(--text-secondary);
+}
+.model-option .model-meta .tag {
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.model-option .model-meta .tag-free {
+  color: var(--accent-green);
+  background: rgba(0, 255, 136, 0.1);
+}
+.model-option .model-meta .tag-ctx {
+  color: var(--accent-yellow);
+}
+.model-count-badge {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+.model-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.model-no-results {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 11px;
 }
 
 /* Mode toggle */
@@ -487,7 +560,10 @@ body {
     <label>Model</label>
     <div class="model-search-wrap">
       <input type="text" id="modelSearch" placeholder="Search models..." autocomplete="off">
-      <div class="model-dropdown" id="modelDropdown"></div>
+      <span class="model-count-badge" id="modelCountBadge"></span>
+      <div class="model-dropdown" id="modelDropdown">
+        <div class="model-loading" id="modelLoading">Loading models...</div>
+      </div>
     </div>
   </div>
 
@@ -611,6 +687,26 @@ function waitForToolbox() {
   });
 }
 
+// ─── Provider display names ───
+const PROVIDER_NAMES = {
+  'anthropic': 'Anthropic',
+  'openai': 'OpenAI',
+  'google': 'Google',
+  'meta-llama': 'Meta (Llama)',
+  'mistralai': 'Mistral AI',
+  'deepseek': 'DeepSeek',
+  'x-ai': 'xAI (Grok)',
+  'cohere': 'Cohere',
+  'microsoft': 'Microsoft',
+  'amazon': 'Amazon',
+  'nvidia': 'NVIDIA',
+  'qwen': 'Qwen (Alibaba)',
+  'perplexity': 'Perplexity',
+  'nousresearch': 'Nous Research',
+  '01-ai': 'Yi (01.AI)',
+  'inflection': 'Inflection',
+};
+
 // ─── Init ───
 async function init() {
   Toolbox = await waitForToolbox();
@@ -620,24 +716,35 @@ async function init() {
     const res = await Toolbox.run({ action: 'list_models' });
     if (res.data && Array.isArray(res.data)) {
       models = res.data;
-      buildModelDropdown();
+      document.getElementById('modelCountBadge').textContent = `(${models.length} models)`;
+      document.getElementById('modelLoading').style.display = 'none';
+      renderModelDropdown();
+    } else {
+      document.getElementById('modelLoading').textContent = res.message || 'Failed to load models';
     }
   } catch (e) {
     console.error('Failed to load models:', e);
+    document.getElementById('modelLoading').textContent = 'Error loading models';
   }
 
   // Events
   document.getElementById('sourceText').addEventListener('input', updateSourceStats);
   document.getElementById('fileInput').addEventListener('change', handleFileLoad);
-  document.getElementById('modelSearch').addEventListener('input', filterModels);
-  document.getElementById('modelSearch').addEventListener('focus', () => showDropdown(true));
+
+  const searchInput = document.getElementById('modelSearch');
+  searchInput.addEventListener('input', renderModelDropdown);
+  searchInput.addEventListener('focus', () => {
+    searchInput.select();
+    showDropdown(true);
+  });
+  searchInput.addEventListener('keydown', handleDropdownKeys);
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.model-search-wrap')) showDropdown(false);
   });
 
   // Set default model in search box
   const defaultM = models.find(m => m.id === selectedModel);
-  document.getElementById('modelSearch').value = defaultM ? defaultM.name : selectedModel;
+  searchInput.value = defaultM ? `${defaultM.name}` : selectedModel;
 
   // Keyboard shortcut
   document.addEventListener('keydown', (e) => {
@@ -651,29 +758,123 @@ async function init() {
 init();
 
 // ─── Model selector ───
-function buildModelDropdown() {
-  filterModels();
+let highlightIndex = -1;
+
+function formatCtx(n) {
+  if (!n) return '?';
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  return `${(n / 1000).toFixed(0)}k`;
 }
 
-function filterModels() {
-  const query = document.getElementById('modelSearch').value.toLowerCase();
+function formatPrice(perToken) {
+  const perM = parseFloat(perToken) * 1000000;
+  if (perM === 0) return null;
+  if (perM < 0.01) return '<$0.01';
+  if (perM >= 100) return `$${perM.toFixed(0)}`;
+  if (perM >= 10) return `$${perM.toFixed(1)}`;
+  return `$${perM.toFixed(2)}`;
+}
+
+function renderModelDropdown() {
+  const query = document.getElementById('modelSearch').value.toLowerCase().trim();
   const dd = document.getElementById('modelDropdown');
+  highlightIndex = -1;
+
+  // Filter
   const filtered = models.filter(m =>
-    m.id.toLowerCase().includes(query) || m.name.toLowerCase().includes(query)
-  ).slice(0, 80);
+    m.id.toLowerCase().includes(query) ||
+    m.name.toLowerCase().includes(query) ||
+    (m.provider || '').toLowerCase().includes(query)
+  );
 
-  dd.innerHTML = filtered.map(m => {
-    const promptCost = parseFloat(m.pricing_prompt) * 1000000;
-    const compCost = parseFloat(m.pricing_completion) * 1000000;
-    const ctx = m.context_length ? `${(m.context_length / 1000).toFixed(0)}k` : '?';
-    const price = promptCost > 0 ? `$${promptCost.toFixed(2)}/$${compCost.toFixed(2)} per M` : 'Free';
-    return `<div class="model-option${m.id === selectedModel ? ' selected' : ''}" data-id="${m.id}" onclick="selectModel('${m.id}', '${m.name.replace(/'/g, "\\'")}')">
-      <span>${m.name}</span>
-      <span class="model-meta">${ctx} ctx | ${price}</span>
-    </div>`;
-  }).join('');
+  if (filtered.length === 0) {
+    dd.innerHTML = '<div class="model-no-results">No models match your search</div>';
+    showDropdown(true);
+    return;
+  }
 
+  // Group by provider
+  const groups = {};
+  for (const m of filtered) {
+    const p = m.provider || 'other';
+    if (!groups[p]) groups[p] = [];
+    groups[p].push(m);
+  }
+
+  // Sort providers: prioritize well-known ones, then alphabetical
+  const priority = ['anthropic', 'openai', 'google', 'meta-llama', 'mistralai', 'deepseek', 'x-ai', 'qwen', 'cohere'];
+  const sortedProviders = Object.keys(groups).sort((a, b) => {
+    const ai = priority.indexOf(a), bi = priority.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  let html = '';
+  let optionIdx = 0;
+
+  for (const provider of sortedProviders) {
+    const providerModels = groups[provider];
+    const displayName = PROVIDER_NAMES[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
+
+    html += `<div class="provider-group-header">${displayName}<span class="provider-count">(${providerModels.length})</span></div>`;
+
+    for (const m of providerModels) {
+      const ctx = formatCtx(m.context_length);
+      const promptPrice = formatPrice(m.pricing_prompt);
+      const compPrice = formatPrice(m.pricing_completion);
+      const isFree = !promptPrice && !compPrice;
+      const priceTag = isFree
+        ? '<span class="tag tag-free">FREE</span>'
+        : `<span class="tag">${promptPrice || '$0'}/${compPrice || '$0'} per M</span>`;
+      const ctxTag = `<span class="tag tag-ctx">${ctx} ctx</span>`;
+      const maxComp = m.max_completion ? `<span class="tag">${formatCtx(m.max_completion)} max out</span>` : '';
+      const isSelected = m.id === selectedModel;
+      const safeId = m.id.replace(/'/g, "\\'");
+      const safeName = m.name.replace(/'/g, "\\'");
+
+      html += `<div class="model-option${isSelected ? ' selected' : ''}" data-idx="${optionIdx}" data-id="${m.id}" onclick="selectModel('${safeId}', '${safeName}')">
+        <span class="model-name">${m.name}</span>
+        <span class="model-id">${m.id}</span>
+        <span class="model-meta">${ctxTag}${maxComp}${priceTag}</span>
+      </div>`;
+      optionIdx++;
+    }
+  }
+
+  dd.innerHTML = html;
   showDropdown(true);
+}
+
+function handleDropdownKeys(e) {
+  const dd = document.getElementById('modelDropdown');
+  const options = dd.querySelectorAll('.model-option');
+  if (!options.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    highlightIndex = Math.min(highlightIndex + 1, options.length - 1);
+    updateHighlight(options);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    highlightIndex = Math.max(highlightIndex - 1, 0);
+    updateHighlight(options);
+  } else if (e.key === 'Enter' && highlightIndex >= 0) {
+    e.preventDefault();
+    options[highlightIndex].click();
+  } else if (e.key === 'Escape') {
+    showDropdown(false);
+  }
+}
+
+function updateHighlight(options) {
+  options.forEach((o, i) => {
+    o.style.background = i === highlightIndex ? 'rgba(0, 229, 255, 0.15)' : '';
+  });
+  if (options[highlightIndex]) {
+    options[highlightIndex].scrollIntoView({ block: 'nearest' });
+  }
 }
 
 function showDropdown(open) {
