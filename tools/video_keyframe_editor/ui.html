@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Video Keyframe Editor</title>
+<style>
+  :root {
+    --bg: #080a12; --surface: #0c1020; --surface2: #111630;
+    --border: #1a2040; --text: #d0d8f0; --dim: #5a6488; --bright: #e8ecff;
+    --cyan: #00ffff; --magenta: #ff00ff; --green: #00ff88;
+    --red: #ff3366; --yellow: #ffff00; --orange: #ff8800;
+    --font: 'Inter', -apple-system, sans-serif;
+    --mono: 'Share Tech Mono', 'SF Mono', monospace;
+    --display: 'Orbitron', monospace;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font); background:var(--bg); color:var(--text); padding:24px; min-height:100vh; }
+
+  h2 { font-family:var(--display); font-size:14px; letter-spacing:3px; text-transform:uppercase; color:var(--bright); margin-bottom:20px; }
+  h3 { font-family:var(--display); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--cyan); margin-bottom:12px; }
+
+  /* Steps bar */
+  .steps { display:flex; gap:4px; margin-bottom:24px; }
+  .step {
+    flex:1; padding:10px 12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; font-family:var(--mono); font-size:11px; color:var(--dim);
+    text-align:center; cursor:pointer; transition:all 0.2s; position:relative;
+  }
+  .step.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,255,255,0.04); box-shadow:0 0 12px rgba(0,255,255,0.08); }
+  .step.done { border-color:rgba(0,255,136,0.3); color:var(--green); }
+  .step-num { font-family:var(--display); font-size:16px; display:block; margin-bottom:2px; }
+
+  /* Panels */
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* Form elements */
+  label { display:block; font-family:var(--mono); font-size:11px; color:var(--dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+  input, select, textarea {
+    width:100%; padding:9px 12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; color:var(--bright); font-family:var(--mono); font-size:13px;
+    outline:none; transition:border-color 0.2s;
+  }
+  input:focus, textarea:focus { border-color:rgba(0,255,255,0.4); }
+  textarea { min-height:60px; resize:vertical; }
+  .field { margin-bottom:14px; }
+  .row { display:flex; gap:12px; }
+  .row > .field { flex:1; }
+
+  /* Buttons */
+  .btn {
+    padding:10px 24px; border-radius:6px; font-family:var(--mono); font-size:12px;
+    cursor:pointer; border:none; transition:all 0.2s; letter-spacing:1px; text-transform:uppercase;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.1));
+    color:var(--cyan); border:1px solid rgba(0,255,255,0.4); box-shadow:0 0 15px rgba(0,255,255,0.08);
+  }
+  .btn-primary:hover { box-shadow:0 0 25px rgba(0,255,255,0.15); }
+  .btn-primary:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-secondary { background:var(--surface); color:var(--dim); border:1px solid var(--border); }
+
+  /* Keyframe grid */
+  .kf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; margin:16px 0; }
+  .kf-card {
+    position:relative; border-radius:6px; overflow:hidden; border:2px solid var(--border);
+    cursor:pointer; transition:all 0.2s;
+  }
+  .kf-card:hover { border-color:rgba(0,255,255,0.3); }
+  .kf-card.selected { border-color:var(--cyan); box-shadow:0 0 12px rgba(0,255,255,0.2); }
+  .kf-card img { width:100%; display:block; aspect-ratio:16/9; object-fit:cover; }
+  .kf-label {
+    position:absolute; bottom:0; left:0; right:0; padding:4px 8px;
+    background:rgba(0,0,0,0.7); font-family:var(--mono); font-size:10px; color:var(--cyan);
+  }
+  .kf-check {
+    position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.3); background:rgba(0,0,0,0.5);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--cyan);
+  }
+  .kf-card.selected .kf-check { background:var(--cyan); color:var(--bg); border-color:var(--cyan); }
+
+  /* Log area */
+  .log {
+    background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:6px;
+    padding:12px; font-family:var(--mono); font-size:11px; line-height:1.7;
+    max-height:300px; overflow-y:auto; white-space:pre-wrap; color:var(--dim);
+    margin:12px 0;
+  }
+  .log .ok { color:var(--green); }
+  .log .err { color:var(--red); }
+  .log .info { color:var(--cyan); }
+
+  /* Status badge */
+  .status { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; margin:8px 0; }
+  .dot { width:7px; height:7px; border-radius:50%; }
+  .dot.running { background:var(--yellow); animation:pulse 1.2s infinite; }
+  .dot.ok { background:var(--green); }
+  .dot.err { background:var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* Segment preview */
+  .seg-list { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+  .seg-row {
+    display:flex; align-items:center; gap:12px; padding:10px; background:var(--surface);
+    border:1px solid var(--border); border-radius:6px;
+  }
+  .seg-row img { width:60px; height:40px; object-fit:cover; border-radius:4px; }
+  .seg-arrow { color:var(--magenta); font-size:16px; }
+  .seg-info { flex:1; font-family:var(--mono); font-size:11px; color:var(--dim); }
+
+  .hint { font-family:var(--mono); font-size:11px; color:var(--dim); margin:4px 0; }
+</style>
+</head>
+<body>
+
+<h2>Video Keyframe Editor</h2>
+
+<div class="steps">
+  <div class="step active" data-step="0"><span class="step-num">1</span>Setup</div>
+  <div class="step" data-step="1"><span class="step-num">2</span>Extract</div>
+  <div class="step" data-step="2"><span class="step-num">3</span>Edit</div>
+  <div class="step" data-step="3"><span class="step-num">4</span>Generate</div>
+  <div class="step" data-step="4"><span class="step-num">5</span>Stitch</div>
+</div>
+
+<!-- STEP 0: Setup -->
+<div class="panel active" id="panel-0">
+  <h3>Source Video & Settings</h3>
+  <div class="field">
+    <label>Video File Path</label>
+    <input type="text" id="video-path" placeholder="/path/to/video.mp4">
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Extraction Method</label>
+      <select id="extract-method">
+        <option value="scene_detect">Scene Detection</option>
+        <option value="interval">Fixed Interval</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Interval (sec) / Threshold</label>
+      <input type="number" id="extract-param" value="27" step="1">
+    </div>
+    <div class="field">
+      <label>Max Keyframes</label>
+      <input type="number" id="max-kf" value="30" min="2" max="100">
+    </div>
+  </div>
+  <div class="field" style="margin-top:8px">
+    <label>Edit Prompt</label>
+    <textarea id="edit-prompt" placeholder="Describe the desired edit — e.g. 'Make it nighttime with neon lighting'"></textarea>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Output Width</label>
+      <input type="number" id="out-width" value="640" step="8">
+    </div>
+    <div class="field">
+      <label>Output Height</label>
+      <input type="number" id="out-height" value="640" step="8">
+    </div>
+    <div class="field">
+      <label>WAN Frame Count</label>
+      <input type="number" id="wan-length" value="81" step="4">
+    </div>
+  </div>
+  <div id="video-info" class="hint"></div>
+  <div style="margin-top:16px; display:flex; gap:10px;">
+    <button class="btn btn-secondary" onclick="checkRequirements()">Check Requirements</button>
+    <button class="btn btn-primary" onclick="goStep(1); extractKeyframes()">▸ Extract Keyframes</button>
+  </div>
+  <div class="log" id="log-0" style="display:none"></div>
+</div>
+
+<!-- STEP 1: Extract & Select -->
+<div class="panel" id="panel-1">
+  <h3>Select Keyframes</h3>
+  <div class="hint">Click frames to select/deselect. Selected frames will be sent for AI editing. Select at least 2.</div>
+  <div class="kf-grid" id="kf-grid"></div>
+  <div class="status" id="extract-status"></div>
+  <div class="log" id="log-1" style="display:none"></div>
+  <div style="margin-top:12px; display:flex; gap:10px;">
+    <button class="btn btn-secondary" onclick="selectAllKf()">Select All</button>
+    <button class="btn btn-secondary" onclick="deselectAllKf()">Deselect All</button>
+    <button class="btn btn-primary" id="btn-edit" onclick="goStep(2); editKeyframes()" disabled>▸ Edit Selected Frames</button>
+  </div>
+</div>
+
+<!-- STEP 2: Edit Keyframes -->
+<div class="panel" id="panel-2">
+  <h3>Editing Keyframes via ComfyCloud (Qwen)</h3>
+  <div class="hint">Submitting each selected keyframe to ComfyCloud for AI editing. This may take a few minutes.</div>
+  <div class="row" style="margin-bottom:12px;">
+    <div class="field">
+      <label>LoRA 1 Strength (jib_qwen_fix)</label>
+      <input type="number" id="lora1-str" value="1.0" step="0.1" min="0" max="2">
+    </div>
+    <div class="field">
+      <label>LoRA 2 Name</label>
+      <input type="text" id="lora2-name" value="Flat Chest (Qwen).safetensors">
+    </div>
+    <div class="field">
+      <label>LoRA 2 Strength</label>
+      <input type="number" id="lora2-str" value="0" step="0.1" min="0" max="2">
+    </div>
+  </div>
+  <div class="status" id="edit-status"></div>
+  <div class="log" id="log-2" style="display:none"></div>
+  <div id="edited-preview" class="kf-grid"></div>
+  <button class="btn btn-primary" id="btn-gen" onclick="goStep(3); generateSegments()" disabled style="margin-top:12px;">▸ Generate Video Segments</button>
+</div>
+
+<!-- STEP 3: Generate -->
+<div class="panel" id="panel-3">
+  <h3>Generating Video Segments (WAN 2.2 FLF2V)</h3>
+  <div class="hint">Each consecutive pair of edited frames generates a smooth video transition.</div>
+  <div class="row" style="margin-bottom:12px;">
+    <div class="field">
+      <label>Motion Prompt (optional)</label>
+      <textarea id="motion-prompt" rows="2" placeholder="Smooth natural motion between frames"></textarea>
+    </div>
+  </div>
+  <div class="seg-list" id="seg-preview"></div>
+  <div class="status" id="gen-status"></div>
+  <div class="log" id="log-3" style="display:none"></div>
+  <button class="btn btn-primary" id="btn-stitch" onclick="goStep(4); stitchVideo()" disabled style="margin-top:12px;">▸ Stitch Final Video</button>
+</div>
+
+<!-- STEP 4: Stitch -->
+<div class="panel" id="panel-4">
+  <h3>Final Output</h3>
+  <div class="status" id="stitch-status"></div>
+  <div class="log" id="log-4" style="display:none"></div>
+  <div id="final-output"></div>
+</div>
+
+<script>
+// =========================================================================
+// State
+// =========================================================================
+let keyframes = [];       // extracted keyframes
+let selectedKfIdx = new Set();
+let editedFrames = [];    // [{original, edited, url}]
+let segments = [];        // [{index, video}]
+let currentStep = 0;
+
+// =========================================================================
+// Toolbox API
+// =========================================================================
+function waitForToolbox() {
+  return new Promise(resolve => {
+    if (window.Toolbox) return resolve(window.Toolbox);
+    window.addEventListener('message', e => {
+      if (e.data && e.data.type === 'toolbox-ready') resolve(window.Toolbox);
+    });
+    let n = 0;
+    const i = setInterval(() => {
+      if (window.Toolbox) { clearInterval(i); resolve(window.Toolbox); }
+      if (++n > 50) clearInterval(i);
+    }, 100);
+  });
+}
+
+async function callAction(action, params = {}) {
+  const tb = await waitForToolbox();
+  return await tb.run({ action, ...params });
+}
+
+// =========================================================================
+// Steps
+// =========================================================================
+function goStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.toggle('active', i === n);
+    if (i < n) s.classList.add('done');
+  });
+  document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+}
+
+document.querySelectorAll('.step').forEach(s => {
+  s.addEventListener('click', () => goStep(parseInt(s.dataset.step)));
+});
+
+// =========================================================================
+// Check Requirements
+// =========================================================================
+async function checkRequirements() {
+  const log = showLog('log-0');
+  logLine(log, 'info', 'Checking requirements…');
+  const res = await callAction('check_requirements');
+  const reqs = res?.result?.data?.requirements || {};
+  for (const [name, info] of Object.entries(reqs)) {
+    if (info.installed) logLine(log, 'ok', `✓ ${name}: installed`);
+    else logLine(log, 'err', `✗ ${name}: missing → ${info.install}`);
+  }
+}
+
+// =========================================================================
+// Extract Keyframes
+// =========================================================================
+async function extractKeyframes() {
+  const log = showLog('log-1');
+  setStatus('extract-status', 'running', 'Extracting keyframes…');
+  logLine(log, 'info', 'Starting keyframe extraction…');
+
+  const method = document.getElementById('extract-method').value;
+  const param = parseFloat(document.getElementById('extract-param').value);
+  const maxKf = parseInt(document.getElementById('max-kf').value);
+  const videoPath = document.getElementById('video-path').value;
+
+  const res = await callAction('extract_keyframes', {
+    video_path: videoPath,
+    method: method,
+    interval_sec: method === 'interval' ? param : 2.0,
+    threshold: method === 'scene_detect' ? param : 27.0,
+    max_keyframes: maxKf,
+  });
+
+  if (res.status === 'success' && res.result?.data?.keyframes) {
+    keyframes = res.result.data.keyframes;
+    setStatus('extract-status', 'ok', `Extracted ${keyframes.length} keyframes`);
+    renderKeyframeGrid();
+  } else {
+    setStatus('extract-status', 'err', res.result?.message || 'Extraction failed');
+    logLine(log, 'err', res.result?.message || JSON.stringify(res));
+  }
+}
+
+function renderKeyframeGrid() {
+  const grid = document.getElementById('kf-grid');
+  grid.innerHTML = keyframes.map((kf, i) => `
+    <div class="kf-card ${selectedKfIdx.has(i) ? 'selected' : ''}" onclick="toggleKf(${i})">
+      <img src="${kf.url}" loading="lazy">
+      <div class="kf-check">${selectedKfIdx.has(i) ? '✓' : ''}</div>
+      <div class="kf-label">#${i} · ${kf.timestamp}s</div>
+    </div>
+  `).join('');
+  document.getElementById('btn-edit').disabled = selectedKfIdx.size < 2;
+}
+
+function toggleKf(i) {
+  if (selectedKfIdx.has(i)) selectedKfIdx.delete(i);
+  else selectedKfIdx.add(i);
+  renderKeyframeGrid();
+}
+function selectAllKf() { keyframes.forEach((_, i) => selectedKfIdx.add(i)); renderKeyframeGrid(); }
+function deselectAllKf() { selectedKfIdx.clear(); renderKeyframeGrid(); }
+
+// =========================================================================
+// Edit Keyframes
+// =========================================================================
+async function editKeyframes() {
+  const log = showLog('log-2');
+  setStatus('edit-status', 'running', 'Editing keyframes via ComfyCloud…');
+
+  const selected = [...selectedKfIdx].sort((a, b) => a - b);
+  const paths = selected.map(i => keyframes[i].path);
+
+  const res = await callAction('edit_keyframes', {
+    edit_prompt: document.getElementById('edit-prompt').value,
+    keyframe_paths: paths,
+    steps: 8,
+    lora1_strength: parseFloat(document.getElementById('lora1-str').value),
+    lora2_name: document.getElementById('lora2-name').value,
+    lora2_strength: parseFloat(document.getElementById('lora2-str').value),
+  });
+
+  if (res.result?.log) res.result.log.forEach(l => logLine(log, 'info', l));
+
+  if (res.status === 'success' && res.result?.data?.edited_frames) {
+    editedFrames = res.result.data.edited_frames;
+    setStatus('edit-status', 'ok', `Edited ${editedFrames.length} frames`);
+    renderEditedPreview();
+    document.getElementById('btn-gen').disabled = false;
+  } else {
+    setStatus('edit-status', 'err', res.result?.message || 'Edit failed');
+    logLine(log, 'err', res.result?.message || '');
+  }
+}
+
+function renderEditedPreview() {
+  document.getElementById('edited-preview').innerHTML = editedFrames.map((ef, i) => `
+    <div class="kf-card selected">
+      <img src="${ef.url}" loading="lazy">
+      <div class="kf-label">Edited #${i}</div>
+    </div>
+  `).join('');
+}
+
+// =========================================================================
+// Generate Segments
+// =========================================================================
+async function generateSegments() {
+  const log = showLog('log-3');
+  setStatus('gen-status', 'running', 'Generating video segments…');
+
+  // Build frame pairs from consecutive edited frames
+  const pairs = [];
+  for (let i = 0; i < editedFrames.length - 1; i++) {
+    pairs.push({ first: editedFrames[i].edited, last: editedFrames[i + 1].edited });
+  }
+
+  // Show segment preview
+  document.getElementById('seg-preview').innerHTML = pairs.map((p, i) => `
+    <div class="seg-row">
+      <span style="color:var(--cyan)">[${i + 1}]</span>
+      <span class="seg-info">Frame ${i} → Frame ${i + 1}</span>
+      <span class="dot running"></span>
+    </div>
+  `).join('');
+
+  const res = await callAction('generate_segments', {
+    frame_pairs: pairs,
+    motion_prompt: document.getElementById('motion-prompt').value,
+    width: parseInt(document.getElementById('out-width').value),
+    height: parseInt(document.getElementById('out-height').value),
+    length: parseInt(document.getElementById('wan-length').value),
+  });
+
+  if (res.result?.log) res.result.log.forEach(l => logLine(log, 'info', l));
+
+  if (res.status === 'success' && res.result?.data?.segments) {
+    segments = res.result.data.segments;
+    setStatus('gen-status', 'ok', `Generated ${segments.length} segments`);
+    document.getElementById('btn-stitch').disabled = false;
+  } else {
+    setStatus('gen-status', 'err', res.result?.message || 'Generation failed');
+    logLine(log, 'err', res.result?.message || '');
+  }
+}
+
+// =========================================================================
+// Stitch
+// =========================================================================
+async function stitchVideo() {
+  const log = showLog('log-4');
+  setStatus('stitch-status', 'running', 'Stitching video segments…');
+
+  const paths = segments.map(s => s.video);
+  const res = await callAction('stitch_video', { segment_paths: paths });
+
+  if (res.status === 'success' && res.result?.files?.length) {
+    setStatus('stitch-status', 'ok', 'Final video ready!');
+    const f = res.result.files[0];
+    document.getElementById('final-output').innerHTML = `
+      <video controls autoplay style="max-width:100%; border-radius:8px; margin-top:12px; border:1px solid var(--border);">
+        <source src="${f.url}" type="video/mp4">
+      </video>
+      <div class="hint" style="margin-top:8px">
+        <a href="${f.url}" target="_blank" style="color:var(--cyan);">⬇ Download final_output.mp4</a>
+      </div>
+    `;
+  } else {
+    setStatus('stitch-status', 'err', res.result?.message || 'Stitch failed');
+    logLine(log, 'err', res.result?.message || '');
+  }
+}
+
+// =========================================================================
+// Helpers
+// =========================================================================
+function showLog(id) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  return el;
+}
+function logLine(el, cls, text) {
+  el.innerHTML += `<span class="${cls}">${esc(text)}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(id, state, msg) {
+  document.getElementById(id).innerHTML = `<span class="dot ${state}"></span> ${esc(msg)}`;
+}
+function esc(s) { const d = document.createElement('span'); d.textContent = s; return d.innerHTML; }
+
+// Auto-load video info when path changes
+document.getElementById('video-path').addEventListener('change', async () => {
+  const path = document.getElementById('video-path').value;
+  if (!path) return;
+  const res = await callAction('get_video_info', { video_path: path });
+  if (res.result?.data) {
+    const d = res.result.data;
+    document.getElementById('video-info').textContent =
+      `${d.width}x${d.height} @ ${d.fps.toFixed(1)}fps · ${d.duration.toFixed(1)}s · ${d.total_frames} frames`;
+  }
+});
+</script>
+</body>
+</html>

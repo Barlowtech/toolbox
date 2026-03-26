@@ -1,0 +1,164 @@
+{
+  "8": {
+    "inputs": {
+      "samples": ["121", 1],
+      "vae": ["118", 2]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "66": {
+    "inputs": {
+      "shift": 3,
+      "model": ["133", 0]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": { "title": "ModelSamplingAuraFlow" }
+  },
+  "75": {
+    "inputs": {
+      "strength": 1,
+      "model": ["66", 0]
+    },
+    "class_type": "CFGNorm",
+    "_meta": { "title": "CFGNorm" }
+  },
+  "77": {
+    "inputs": {
+      "prompt": "__NEGATIVE_PROMPT__",
+      "clip": ["133", 1],
+      "vae": ["118", 2],
+      "image": ["78", 0]
+    },
+    "class_type": "TextEncodeQwenImageEdit",
+    "_meta": { "title": "TextEncodeQwenImageEdit (Negative)" }
+  },
+  "78": {
+    "inputs": {
+      "image": "__INPUT_IMAGE__"
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Load Input Image" }
+  },
+  "88": {
+    "inputs": {
+      "pixels": ["93", 0],
+      "vae": ["118", 2]
+    },
+    "class_type": "VAEEncode",
+    "_meta": { "title": "VAE Encode" }
+  },
+  "93": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": ["78", 0]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": { "title": "ImageScaleToTotalPixels" }
+  },
+  "115": {
+    "inputs": {
+      "value": "__STEPS__"
+    },
+    "class_type": "INTConstant",
+    "_meta": { "title": "Steps" }
+  },
+  "117": {
+    "inputs": {
+      "value": "__SEED__"
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": { "title": "Seed" }
+  },
+  "118": {
+    "inputs": {
+      "ckpt_name": "qwenRapidAIO_v11.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": { "title": "Load Checkpoint" }
+  },
+  "119": {
+    "inputs": {
+      "prompt": "__EDIT_PROMPT__",
+      "clip": ["133", 1],
+      "vae": ["118", 2],
+      "image1": ["78", 0]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": { "title": "TextEncodeQwenImageEditPlus (Positive)" }
+  },
+  "121": {
+    "inputs": {
+      "eta": 0.5,
+      "sampler_name": "linear/euler",
+      "scheduler": "simple",
+      "steps": ["115", 0],
+      "steps_to_run": -1,
+      "denoise": 1,
+      "cfg": 1,
+      "seed": ["117", 0],
+      "sampler_mode": "standard",
+      "bongmath": true,
+      "model": ["75", 0],
+      "positive": ["119", 0],
+      "negative": ["77", 0],
+      "latent_image": ["88", 0]
+    },
+    "class_type": "ClownsharKSampler_Beta",
+    "_meta": { "title": "ClownsharKSampler" }
+  },
+  "130": {
+    "inputs": {
+      "lora_name": "jib_qwen_fix_000002750.safetensors",
+      "strength_model": "__LORA1_STRENGTH__",
+      "strength_clip": 1,
+      "model": ["118", 0],
+      "clip": ["118", 1]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "LoRA 1 — Snofs" }
+  },
+  "131": {
+    "inputs": {
+      "lora_name": "__LORA2_NAME__",
+      "strength_model": "__LORA2_STRENGTH__",
+      "strength_clip": 1,
+      "model": ["130", 0],
+      "clip": ["130", 1]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "LoRA 2" }
+  },
+  "132": {
+    "inputs": {
+      "lora_name": "__LORA3_NAME__",
+      "strength_model": "__LORA3_STRENGTH__",
+      "strength_clip": 1,
+      "model": ["131", 0],
+      "clip": ["131", 1]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "LoRA 3" }
+  },
+  "133": {
+    "inputs": {
+      "lora_name": "__LORA4_NAME__",
+      "strength_model": "__LORA4_STRENGTH__",
+      "strength_clip": 1,
+      "model": ["132", 0],
+      "clip": ["132", 1]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "LoRA 4" }
+  },
+  "140": {
+    "inputs": {
+      "filename_prefix": "qwen_edit/ComfyUI",
+      "images": ["8", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save Output" }
+  }
+}

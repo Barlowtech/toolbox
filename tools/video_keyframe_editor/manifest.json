@@ -1,0 +1,7 @@
+{
+  "name": "Video Keyframe Editor",
+  "description": "Extract keyframes from video, edit them with AI (Qwen on ComfyCloud), then generate smooth transitions between edited frames (WAN 2.2 FLF2V). Full AI video editing pipeline.",
+  "category": "media",
+  "icon": "media",
+  "version": "1.0"
+}
