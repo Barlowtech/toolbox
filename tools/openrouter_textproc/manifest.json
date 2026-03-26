@@ -1,0 +1,57 @@
+{
+  "name": "OpenRouter Text Processor",
+  "description": "Two-panel text processor: paste source text + write an instruction prompt, send to any OpenRouter model. Supports single-shot and conversation modes.",
+  "category": "ai",
+  "icon": "ai",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "action",
+      "type": "string",
+      "label": "Action",
+      "required": true
+    },
+    {
+      "name": "source_text",
+      "type": "textarea",
+      "label": "Source Text",
+      "required": false
+    },
+    {
+      "name": "instruction",
+      "type": "textarea",
+      "label": "Instruction",
+      "required": false
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "label": "Model",
+      "required": false
+    },
+    {
+      "name": "conversation_history",
+      "type": "text",
+      "label": "Conversation History (JSON)",
+      "required": false
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "required": false
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "required": false
+    },
+    {
+      "name": "system_prompt",
+      "type": "textarea",
+      "label": "System Prompt Override",
+      "required": false
+    }
+  ]
+}
