@@ -1,0 +1,25 @@
+# Secrets — synced via Dropbox, never committed
+secrets.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Tool outputs (generated at runtime)
+outputs/
+
+# macOS
+.DS_Store
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

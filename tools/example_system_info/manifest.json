@@ -1,0 +1,8 @@
+{
+  "name": "System Info",
+  "description": "Display information about your machine — Python version, OS, CPU, memory, disk space.",
+  "category": "dev",
+  "icon": "dev",
+  "version": "1.0",
+  "params": []
+}

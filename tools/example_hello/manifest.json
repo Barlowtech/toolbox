@@ -1,0 +1,22 @@
+{
+  "name": "Hello World",
+  "description": "A minimal example tool. Enter a name and get a greeting back.",
+  "category": "examples",
+  "icon": "general",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "name",
+      "type": "text",
+      "label": "Your Name",
+      "placeholder": "e.g. Wes",
+      "required": true
+    },
+    {
+      "name": "shout",
+      "type": "boolean",
+      "label": "SHOUT IT",
+      "default": false
+    }
+  ]
+}

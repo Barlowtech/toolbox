@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOOLBOX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a12;
+      --bg-grid: rgba(0,255,255,0.015);
+      --surface: #0c1020;
+      --surface-hover: #111630;
+      --surface-bright: #151a35;
+      --border: #1a2040;
+      --border-glow: rgba(0,255,255,0.15);
+      --text: #d0d8f0;
+      --text-dim: #5a6488;
+      --text-bright: #e8ecff;
+
+      /* Neon palette */
+      --cyan: #00ffff;
+      --cyan-dim: rgba(0,255,255,0.4);
+      --cyan-glow: rgba(0,255,255,0.08);
+      --magenta: #ff00ff;
+      --magenta-dim: rgba(255,0,255,0.4);
+      --magenta-glow: rgba(255,0,255,0.06);
+      --yellow: #ffff00;
+      --green: #00ff88;
+      --red: #ff3366;
+      --orange: #ff8800;
+
+      --radius: 6px;
+      --font-display: 'Orbitron', monospace;
+      --font-mono: 'Share Tech Mono', 'SF Mono', monospace;
+      --font-body: 'Inter', -apple-system, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      /* Subtle grid background */
+      background-image:
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* --- Scanline overlay --- */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* --- Header --- */
+    header {
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0,255,255,0.03) 0%, transparent 100%);
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan-dim), var(--magenta-dim), transparent);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-glyph {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan-dim), 0 0 40px rgba(0,255,255,0.15);
+      text-transform: uppercase;
+    }
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-btn {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .header-btn:hover {
+      border-color: var(--cyan-dim);
+      color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0,255,255,0.1);
+    }
+    .header-btn.active {
+      border-color: var(--magenta-dim);
+      color: var(--magenta);
+      box-shadow: 0 0 12px rgba(255,0,255,0.1);
+    }
+    .tool-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--cyan);
+      background: rgba(0,255,255,0.06);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,255,255,0.12);
+    }
+
+    /* --- Layout --- */
+    .container {
+      display: flex;
+      height: calc(100vh - 57px);
+    }
+
+    /* --- Sidebar --- */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px;
+      background: rgba(0,0,0,0.2);
+    }
+    .sidebar-search {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      margin-bottom: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .sidebar-search:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 12px rgba(0,255,255,0.08);
+    }
+    .sidebar-search::placeholder { color: var(--text-dim); }
+
+    .category-label {
+      font-family: var(--font-display);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      padding: 14px 8px 6px;
+    }
+
+    .tool-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .tool-card:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-glow);
+    }
+    .tool-card.active {
+      background: var(--surface-bright);
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 20px rgba(0,255,255,0.06), inset 0 0 20px rgba(0,255,255,0.02);
+    }
+    .tool-card.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 2px;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      border-radius: 1px;
+    }
+    .tool-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .tool-card.active .tool-icon {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 10px rgba(0,255,255,0.15);
+    }
+    .tool-info h3 {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.3;
+      color: var(--text-bright);
+    }
+    .tool-info p {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    /* --- Main panel --- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    /* --- Welcome --- */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+    }
+    .welcome-logo {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 10px;
+      background: linear-gradient(135deg, var(--cyan), var(--magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      text-shadow: none;
+      filter: drop-shadow(0 0 30px rgba(0,255,255,0.2));
+    }
+    .welcome p {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      max-width: 420px;
+      line-height: 1.8;
+    }
+    .welcome code {
+      color: var(--cyan);
+      background: rgba(0,255,255,0.06);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    /* --- Tool detail --- */
+    .tool-header { margin-bottom: 24px; }
+    .tool-header h2 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--text-bright);
+      text-transform: uppercase;
+    }
+    .tool-header .desc {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-top: 6px;
+    }
+    .tool-header .meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .meta-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+    }
+
+    /* --- Form --- */
+    .param-group { margin-bottom: 18px; }
+    .param-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 400;
+      margin-bottom: 5px;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .param-group label .required { color: var(--magenta); margin-left: 2px; }
+    .param-group .hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+      font-family: var(--font-mono);
+    }
+
+    .param-group input[type="text"],
+    .param-group input[type="number"],
+    .param-group input[type="url"],
+    .param-group textarea,
+    .param-group select {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-bright);
+      font-size: 13px;
+      font-family: var(--font-mono);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .param-group input:focus,
+    .param-group textarea:focus,
+    .param-group select:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 12px rgba(0,255,255,0.08);
+    }
+    .param-group textarea { min-height: 70px; resize: vertical; }
+    .param-group input[type="checkbox"] { width: auto; margin-right: 8px; accent-color: var(--cyan); }
+    .checkbox-row { display: flex; align-items: center; padding: 6px 0; }
+
+    /* --- Buttons --- */
+    .btn {
+      padding: 9px 22px;
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 400;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.1));
+      color: var(--cyan);
+      border: 1px solid var(--cyan-dim);
+      box-shadow: 0 0 15px rgba(0,255,255,0.08);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(0,255,255,0.25), rgba(255,0,255,0.15));
+      box-shadow: 0 0 25px rgba(0,255,255,0.15);
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-glow);
+      color: var(--text);
+    }
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* --- Output --- */
+    .output-section {
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+    .output-section h3 {
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.running {
+      background: var(--yellow);
+      box-shadow: 0 0 8px var(--yellow);
+      animation: pulse 1.2s infinite;
+    }
+    .status-dot.success {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .status-dot.error {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .output-log {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .output-log .log-line { padding: 1px 0; }
+    .output-log .log-progress { color: var(--cyan); }
+    .output-log .log-error { color: var(--red); }
+    .output-log .log-success { color: var(--green); }
+    .output-log .log-data { color: var(--text-dim); }
+
+    .output-files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .output-file-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--cyan);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      transition: all 0.15s;
+    }
+    .output-file-link:hover {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 10px rgba(0,255,255,0.1);
+    }
+
+    /* --- Custom UI iframe --- */
+    .custom-ui-frame {
+      width: 100%;
+      height: calc(100vh - 57px);
+      border: none;
+      background: var(--bg);
+    }
+
+    /* --- Secrets Panel (modal overlay) --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 60px rgba(0,255,255,0.08), 0 0 120px rgba(255,0,255,0.04);
+    }
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--magenta);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--red); }
+    .modal-body { padding: 18px 22px; }
+
+    .secret-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .secret-key {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--cyan);
+      flex: 1;
+    }
+    .secret-preview {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .secret-del {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: all 0.15s;
+    }
+    .secret-del:hover { border-color: var(--red); color: var(--red); }
+
+    .add-secret-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .add-secret-form input {
+      flex: 1;
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+    }
+    .add-secret-form input:focus { border-color: var(--cyan-dim); }
+    .add-secret-form button {
+      padding: 8px 16px;
+      background: rgba(255,0,255,0.1);
+      border: 1px solid var(--magenta-dim);
+      color: var(--magenta);
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+    .add-secret-form button:hover {
+      background: rgba(255,0,255,0.2);
+      box-shadow: 0 0 12px rgba(255,0,255,0.15);
+    }
+
+    .no-secrets {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    /* --- Scrollbar --- */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    .empty-tools {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    /* --- Neon flicker on hover for fun --- */
+    @keyframes neon-flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+      20%, 24%, 55% { opacity: 0.6; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div>
+      <div class="logo-glyph">TOOLBOX</div>
+      <div class="logo-sub">local dev dashboard // v1.0</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="tool-count" id="tool-count">0 tools</span>
+    <button class="header-btn" onclick="openSecrets()">SECRETS</button>
+  </div>
+</header>
+
+<div class="container">
+  <aside class="sidebar">
+    <input type="text" class="sidebar-search" id="search" placeholder="> search tools…" autocomplete="off">
+    <div id="tool-list"></div>
+  </aside>
+  <main class="main" id="main-panel">
+    <div class="welcome">
+      <div class="welcome-logo">TOOLBOX</div>
+      <p>
+        Select a tool from the sidebar to get started.<br><br>
+        Tools are auto-discovered from <code>/tools</code>.<br>
+        Each tool needs a <code>manifest.json</code> and <code>tool.py</code>.<br>
+        Add a <code>ui.html</code> for a custom interface.
+      </p>
+    </div>
+  </main>
+</div>
+
+<!-- Secrets Modal -->
+<div class="modal-overlay hidden" id="secrets-modal" onclick="if(event.target===this)closeSecrets()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>API Keys &amp; Secrets</h2>
+      <button class="modal-close" onclick="closeSecrets()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="secrets-list"></div>
+      <div class="add-secret-form">
+        <input type="text" id="new-secret-key" placeholder="KEY_NAME">
+        <input type="text" id="new-secret-value" placeholder="value / api key">
+        <button onclick="addSecret()">+ ADD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================================================================
+// State
+// ===========================================================================
+let tools = [];
+let activeTool = null;
+let isRunning = false;
+
+const ICONS = {
+  general: '◈', media: '▶', api: '◎', data: '◆',
+  file: '□', text: '≡', image: '◐', audio: '♫',
+  dev: '⌘', ai: '◉', examples: '△', default: '◇'
+};
+
+// ===========================================================================
+// Boot
+// ===========================================================================
+async function init() {
+  const res = await fetch('/api/tools');
+  const data = await res.json();
+  tools = data.tools || [];
+  document.getElementById('tool-count').textContent = `${tools.length} tool${tools.length !== 1 ? 's' : ''}`;
+  renderToolList(tools);
+}
+
+// ===========================================================================
+// Sidebar
+// ===========================================================================
+function renderToolList(filtered) {
+  const container = document.getElementById('tool-list');
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-tools">No tools found.<br>Add a folder to <code>/tools</code>.</div>`;
+    return;
+  }
+  const groups = {};
+  for (const t of filtered) {
+    const cat = t.category || 'general';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(t);
+  }
+  let html = '';
+  for (const [cat, items] of Object.entries(groups).sort()) {
+    html += `<div class="category-label">${cat}</div>`;
+    for (const t of items) {
+      const icon = ICONS[t.icon] || ICONS[t.category] || ICONS.default;
+      const isActive = activeTool && activeTool.id === t.id;
+      html += `
+        <div class="tool-card ${isActive ? 'active' : ''}" onclick="selectTool('${t.id}')">
+          <div class="tool-icon">${icon}</div>
+          <div class="tool-info">
+            <h3>${esc(t.name)}</h3>
+            <p>${esc(t.description || '').substring(0, 80)}</p>
+          </div>
+        </div>`;
+    }
+  }
+  container.innerHTML = html;
+}
+
+document.getElementById('search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  const filtered = tools.filter(t =>
+    t.name.toLowerCase().includes(q) ||
+    (t.description || '').toLowerCase().includes(q) ||
+    (t.category || '').toLowerCase().includes(q)
+  );
+  renderToolList(filtered);
+});
+
+// ===========================================================================
+// Tool Detail
+// ===========================================================================
+function selectTool(id) {
+  activeTool = tools.find(t => t.id === id);
+  if (!activeTool) return;
+  renderToolList(tools);
+  renderToolDetail(activeTool);
+}
+
+function renderToolDetail(tool) {
+  const panel = document.getElementById('main-panel');
+
+  // Custom UI mode
+  if (tool.has_custom_ui) {
+    panel.innerHTML = `<iframe class="custom-ui-frame" id="tool-iframe" src="/api/tools/${tool.id}/ui"></iframe>`;
+    const iframe = document.getElementById('tool-iframe');
+    iframe.addEventListener('load', () => {
+      const w = iframe.contentWindow;
+      w.Toolbox = {
+        toolId: tool.id,
+        manifest: tool,
+        async run(params = {}) {
+          const res = await fetch(`/api/tools/${tool.id}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ params }),
+          });
+          return await res.json();
+        },
+        assetsUrl: `/api/tools/${tool.id}/assets`,
+        outputsUrl(runId) { return `/outputs/${tool.id}_${runId}`; },
+      };
+      w.postMessage({ type: 'toolbox-ready', toolId: tool.id }, '*');
+    });
+    return;
+  }
+
+  // Standard form mode
+  const icon = ICONS[tool.icon] || ICONS[tool.category] || ICONS.default;
+  const params = tool.params || [];
+  let formHtml = '';
+  for (const p of params) formHtml += renderParam(p);
+
+  panel.innerHTML = `
+    <div class="tool-header">
+      <h2>${icon} ${esc(tool.name)}</h2>
+      <div class="desc">${esc(tool.description || '')}</div>
+      <div class="meta">
+        <span class="meta-tag">${esc(tool.category || 'general')}</span>
+        <span class="meta-tag">id: ${esc(tool.id)}</span>
+        ${tool.version ? `<span class="meta-tag">v${esc(tool.version)}</span>` : ''}
+      </div>
+    </div>
+    <form id="tool-form" onsubmit="runTool(event)">
+      ${formHtml || '<p style="color:var(--text-dim);font-family:var(--font-mono);font-size:12px;">No parameters. Hit RUN.</p>'}
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary" id="run-btn">▸ RUN</button>
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">RESET</button>
+      </div>
+    </form>
+    <div class="output-section" id="output-section" style="display:none;">
+      <h3><span class="status-dot" id="status-dot"></span> <span id="output-title">OUTPUT</span></h3>
+      <div class="output-log" id="output-log"></div>
+      <div class="output-files" id="output-files"></div>
+    </div>
+  `;
+}
+
+function renderParam(p) {
+  const req = p.required ? '<span class="required">*</span>' : '';
+  const hint = p.hint ? `<div class="hint">${esc(p.hint)}</div>` : '';
+  const name = p.name;
+  const defaultVal = p.default !== undefined ? p.default : '';
+
+  switch (p.type) {
+    case 'text': case 'string':
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<input type="text" name="${name}" value="${esc(String(defaultVal))}" placeholder="${esc(p.placeholder||'')}"></div>`;
+    case 'number':
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<input type="number" name="${name}" value="${esc(String(defaultVal))}" step="${p.step||'any'}" min="${p.min??''}" max="${p.max??''}"></div>`;
+    case 'url':
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<input type="url" name="${name}" value="${esc(String(defaultVal))}" placeholder="${esc(p.placeholder||'https://')}"></div>`;
+    case 'textarea':
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<textarea name="${name}" placeholder="${esc(p.placeholder||'')}">${esc(String(defaultVal))}</textarea></div>`;
+    case 'select':
+      const opts = (p.options||[]).map(o => typeof o==='string'
+        ? `<option value="${esc(o)}" ${o===defaultVal?'selected':''}>${esc(o)}</option>`
+        : `<option value="${esc(o.value)}" ${o.value===defaultVal?'selected':''}>${esc(o.label)}</option>`
+      ).join('');
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<select name="${name}">${opts}</select></div>`;
+    case 'boolean': case 'checkbox':
+      return `<div class="param-group"><div class="checkbox-row"><input type="checkbox" name="${name}" ${defaultVal?'checked':''}><label>${esc(p.label||name)}${req}</label></div>${hint}</div>`;
+    case 'file':
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<input type="text" name="${name}" value="${esc(String(defaultVal))}" placeholder="${esc(p.placeholder||'/path/to/file')}"><div class="hint" style="margin-top:3px">Full file path on your computer</div></div>`;
+    default:
+      return `<div class="param-group"><label>${esc(p.label||name)}${req}</label>${hint}<input type="text" name="${name}" value="${esc(String(defaultVal))}"></div>`;
+  }
+}
+
+// ===========================================================================
+// Run Tool
+// ===========================================================================
+async function runTool(e) {
+  e.preventDefault();
+  if (isRunning || !activeTool) return;
+
+  const form = document.getElementById('tool-form');
+  const formData = new FormData(form);
+  const params = {};
+  for (const p of (activeTool.params || [])) {
+    if (p.type==='boolean'||p.type==='checkbox') params[p.name] = formData.get(p.name)==='on';
+    else if (p.type==='number') { const v=formData.get(p.name); params[p.name]=v!==''?Number(v):null; }
+    else params[p.name] = formData.get(p.name) || '';
+  }
+
+  const section = document.getElementById('output-section');
+  const log = document.getElementById('output-log');
+  const dot = document.getElementById('status-dot');
+  const title = document.getElementById('output-title');
+  const filesDiv = document.getElementById('output-files');
+
+  section.style.display = 'block';
+  log.innerHTML = '';
+  filesDiv.innerHTML = '';
+  dot.className = 'status-dot running';
+  title.textContent = 'RUNNING';
+  isRunning = true;
+  document.getElementById('run-btn').disabled = true;
+  appendLog('log-progress', `▸ Executing ${activeTool.name}…`);
+
+  try {
+    const res = await fetch(`/api/tools/${activeTool.id}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ params }),
+    });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      dot.className = 'status-dot success';
+      title.textContent = 'COMPLETE';
+      const result = data.result || {};
+      if (result.message) appendLog('log-success', result.message);
+      if (result.log) for (const line of (Array.isArray(result.log)?result.log:[result.log])) appendLog('log-data', line);
+      if (result.data) appendLog('log-data', JSON.stringify(result.data, null, 2));
+      if (result.files && result.files.length > 0) {
+        for (const f of result.files) {
+          const a = document.createElement('a');
+          a.className = 'output-file-link';
+          a.href = f.url || '#';
+          a.target = '_blank';
+          a.textContent = `◇ ${f.name || f.url}`;
+          filesDiv.appendChild(a);
+        }
+      }
+    } else {
+      dot.className = 'status-dot error';
+      title.textContent = 'ERROR';
+      appendLog('log-error', data.error || 'Unknown error');
+      if (data.traceback) appendLog('log-data', data.traceback);
+    }
+  } catch (err) {
+    dot.className = 'status-dot error';
+    title.textContent = 'ERROR';
+    appendLog('log-error', `Network error: ${err.message}`);
+  }
+
+  isRunning = false;
+  document.getElementById('run-btn').disabled = false;
+}
+
+function appendLog(cls, text) {
+  const log = document.getElementById('output-log');
+  const div = document.createElement('div');
+  div.className = `log-line ${cls}`;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetForm() { document.getElementById('tool-form')?.reset(); }
+
+// ===========================================================================
+// Secrets Modal
+// ===========================================================================
+async function openSecrets() {
+  document.getElementById('secrets-modal').classList.remove('hidden');
+  await refreshSecrets();
+}
+function closeSecrets() {
+  document.getElementById('secrets-modal').classList.add('hidden');
+}
+
+async function refreshSecrets() {
+  const res = await fetch('/api/secrets');
+  const data = await res.json();
+  const list = document.getElementById('secrets-list');
+  if (!data.keys || data.keys.length === 0) {
+    list.innerHTML = '<div class="no-secrets">No secrets stored yet.</div>';
+    return;
+  }
+  list.innerHTML = data.keys.map(s => `
+    <div class="secret-row">
+      <span class="secret-key">${esc(s.key)}</span>
+      <span class="secret-preview">${esc(s.preview)}</span>
+      <button class="secret-del" onclick="deleteSecret('${esc(s.key)}')">DEL</button>
+    </div>
+  `).join('');
+}
+
+async function addSecret() {
+  const keyInput = document.getElementById('new-secret-key');
+  const valInput = document.getElementById('new-secret-value');
+  const key = keyInput.value.trim();
+  const value = valInput.value;
+  if (!key) { keyInput.focus(); return; }
+
+  await fetch('/api/secrets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value }),
+  });
+  keyInput.value = '';
+  valInput.value = '';
+  await refreshSecrets();
+}
+
+async function deleteSecret(key) {
+  await fetch(`/api/secrets/${encodeURIComponent(key)}`, { method: 'DELETE' });
+  await refreshSecrets();
+}
+
+// ===========================================================================
+// Util
+// ===========================================================================
+function esc(s) {
+  const el = document.createElement('span');
+  el.textContent = s;
+  return el.innerHTML;
+}
+
+// Boot
+init();
+</script>
+</body>
+</html>

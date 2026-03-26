@@ -1,0 +1,38 @@
+{
+  "name": "My New Tool",
+  "description": "What this tool does in one sentence.",
+  "category": "general",
+  "icon": "general",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "example_text",
+      "type": "text",
+      "label": "Example Input",
+      "placeholder": "Type something…",
+      "required": true,
+      "hint": "This is a help message shown below the label."
+    },
+    {
+      "name": "example_number",
+      "type": "number",
+      "label": "Count",
+      "default": 10,
+      "min": 1,
+      "max": 100
+    },
+    {
+      "name": "example_select",
+      "type": "select",
+      "label": "Choose One",
+      "options": ["option_a", "option_b", "option_c"],
+      "default": "option_a"
+    },
+    {
+      "name": "example_toggle",
+      "type": "boolean",
+      "label": "Enable feature",
+      "default": false
+    }
+  ]
+}

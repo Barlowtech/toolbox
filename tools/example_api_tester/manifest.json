@@ -1,0 +1,7 @@
+{
+  "name": "API Tester",
+  "description": "Make HTTP requests to any API endpoint. Supports GET, POST, PUT, DELETE with custom headers and body.",
+  "category": "api",
+  "icon": "api",
+  "version": "1.0"
+}

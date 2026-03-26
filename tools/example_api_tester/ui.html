@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>API Tester</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2e3a;
+    --text: #e1e4ec;
+    --text-dim: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-hover: #8aa4ff;
+    --success: #4ade80;
+    --error: #f87171;
+    --warning: #fbbf24;
+    --radius: 8px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    padding: 28px;
+  }
+  h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+
+  .row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .row.full { flex-direction: column; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  select, input, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { font-family: var(--mono); font-size: 13px; min-height: 80px; resize: vertical; }
+  select { width: 120px; flex-shrink: 0; cursor: pointer; }
+
+  .method-get { border-left: 3px solid var(--success); }
+  .method-post { border-left: 3px solid var(--accent); }
+  .method-put { border-left: 3px solid var(--warning); }
+  .method-delete { border-left: 3px solid var(--error); }
+
+  .btn {
+    padding: 10px 28px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .response-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .status-badge {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .status-2xx { background: rgba(74,222,128,0.15); color: var(--success); }
+  .status-4xx { background: rgba(248,113,113,0.15); color: var(--error); }
+  .status-5xx { background: rgba(248,113,113,0.15); color: var(--error); }
+  .status-other { background: rgba(139,143,163,0.15); color: var(--text-dim); }
+
+  .response-body {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    max-height: 400px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-dim);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 1;
+  }
+  .tab {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    cursor: pointer;
+  }
+  .tab.active {
+    background: #0a0c10;
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<h2>API Tester</h2>
+
+<div class="row">
+  <div>
+    <label>Method</label>
+    <select id="method">
+      <option value="GET">GET</option>
+      <option value="POST">POST</option>
+      <option value="PUT">PUT</option>
+      <option value="DELETE">DELETE</option>
+      <option value="PATCH">PATCH</option>
+    </select>
+  </div>
+  <div style="flex:1">
+    <label>URL</label>
+    <input type="url" id="url" placeholder="https://api.example.com/endpoint" value="https://httpbin.org/get">
+  </div>
+  <div style="align-self:flex-end">
+    <button class="btn" id="send-btn" onclick="sendRequest()">Send</button>
+  </div>
+</div>
+
+<div class="row full">
+  <label>Headers <span style="color:var(--text-dim);font-weight:400;text-transform:none">(JSON object)</span></label>
+  <textarea id="headers" rows="3" placeholder='{"Authorization": "Bearer sk-...", "Content-Type": "application/json"}'>{}</textarea>
+</div>
+
+<div class="row full" id="body-section">
+  <label>Body <span style="color:var(--text-dim);font-weight:400;text-transform:none">(raw)</span></label>
+  <textarea id="body" rows="4" placeholder='{"key": "value"}'></textarea>
+</div>
+
+<div id="response-section" class="hidden">
+  <div class="response-bar">
+    <span class="status-badge" id="resp-status"></span>
+    <span id="resp-time" style="color:var(--text-dim)"></span>
+    <span id="resp-message" style="flex:1"></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('body-tab')">Body</div>
+    <div class="tab" onclick="showTab('headers-tab')">Headers</div>
+  </div>
+
+  <div class="response-body" id="body-tab"></div>
+  <div class="response-body hidden" id="headers-tab"></div>
+</div>
+
+<script>
+// Wait for Toolbox API to be injected
+function waitForToolbox() {
+  return new Promise(resolve => {
+    if (window.Toolbox) return resolve(window.Toolbox);
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'toolbox-ready') resolve(window.Toolbox);
+    });
+    // Fallback: poll briefly
+    let attempts = 0;
+    const interval = setInterval(() => {
+      if (window.Toolbox) { clearInterval(interval); resolve(window.Toolbox); }
+      if (++attempts > 50) clearInterval(interval);
+    }, 100);
+  });
+}
+
+async function sendRequest() {
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const method = document.getElementById('method').value;
+  const url = document.getElementById('url').value;
+  const headers = document.getElementById('headers').value;
+  const body = document.getElementById('body').value;
+
+  try {
+    const tb = await waitForToolbox();
+    const response = await tb.run({ method, url, headers, body });
+
+    const section = document.getElementById('response-section');
+    section.classList.remove('hidden');
+
+    if (response.status === 'success' && response.result) {
+      const r = response.result;
+      const data = r.data || {};
+
+      // Status badge
+      const statusEl = document.getElementById('resp-status');
+      const code = data.status || '???';
+      statusEl.textContent = code;
+      statusEl.className = 'status-badge ' + (
+        code >= 200 && code < 300 ? 'status-2xx' :
+        code >= 400 && code < 500 ? 'status-4xx' :
+        code >= 500 ? 'status-5xx' : 'status-other'
+      );
+
+      document.getElementById('resp-time').textContent = data.elapsed_seconds ? `${data.elapsed_seconds}s` : '';
+      document.getElementById('resp-message').textContent = `${method} ${url}`;
+
+      document.getElementById('body-tab').textContent = data.body || '(empty)';
+      document.getElementById('headers-tab').textContent = data.response_headers
+        ? JSON.stringify(data.response_headers, null, 2)
+        : '(none)';
+    } else {
+      document.getElementById('resp-status').textContent = 'ERR';
+      document.getElementById('resp-status').className = 'status-badge status-5xx';
+      document.getElementById('resp-message').textContent = response.error || 'Unknown error';
+      document.getElementById('body-tab').textContent = response.traceback || response.error || '';
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send';
+}
+
+function showTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('body-tab').classList.add('hidden');
+  document.getElementById('headers-tab').classList.add('hidden');
+  document.getElementById(tabId).classList.remove('hidden');
+  event.target.classList.add('active');
+}
+
+// Update URL placeholder based on method
+document.getElementById('method').addEventListener('change', (e) => {
+  const urlInput = document.getElementById('url');
+  const bodySection = document.getElementById('body-section');
+  const method = e.target.value;
+
+  // Show/hide body for GET/DELETE
+  if (method === 'GET' || method === 'DELETE') {
+    bodySection.style.opacity = '0.4';
+  } else {
+    bodySection.style.opacity = '1';
+  }
+
+  // Update default URL
+  const defaults = {
+    GET: 'https://httpbin.org/get',
+    POST: 'https://httpbin.org/post',
+    PUT: 'https://httpbin.org/put',
+    DELETE: 'https://httpbin.org/delete',
+    PATCH: 'https://httpbin.org/patch',
+  };
+  if (urlInput.value.startsWith('https://httpbin.org/')) {
+    urlInput.value = defaults[method] || urlInput.value;
+  }
+});
+</script>
+</body>
+</html>
