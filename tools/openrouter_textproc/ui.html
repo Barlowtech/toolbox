@@ -720,11 +720,11 @@ async function init() {
       document.getElementById('modelLoading').style.display = 'none';
       renderModelDropdown();
     } else {
-      document.getElementById('modelLoading').textContent = res.message || 'Failed to load models';
+      showModelError(res.message || 'Failed to load models');
     }
   } catch (e) {
     console.error('Failed to load models:', e);
-    document.getElementById('modelLoading').textContent = 'Error loading models';
+    showModelError('Error loading models: ' + (e.message || e));
   }
 
   // Events
@@ -756,6 +756,35 @@ async function init() {
 }
 
 init();
+
+function showModelError(msg) {
+  const el = document.getElementById('modelLoading');
+  el.style.display = '';
+  el.innerHTML = `<div style="color:var(--accent-red)">${msg}</div>
+    <button class="btn btn-small" style="margin-top:8px" onclick="retryLoadModels()">Retry</button>`;
+}
+
+async function retryLoadModels() {
+  if (!Toolbox) return;
+  document.getElementById('modelLoading').style.display = '';
+  document.getElementById('modelLoading').innerHTML = 'Loading models...';
+  try {
+    const res = await Toolbox.run({ action: 'list_models' });
+    if (res.data && Array.isArray(res.data)) {
+      models = res.data;
+      document.getElementById('modelCountBadge').textContent = `(${models.length} models)`;
+      document.getElementById('modelLoading').style.display = 'none';
+      renderModelDropdown();
+      const defaultM = models.find(m => m.id === selectedModel);
+      document.getElementById('modelSearch').value = defaultM ? defaultM.name : selectedModel;
+      showToast(`Loaded ${models.length} models`);
+    } else {
+      showModelError(res.message || 'Failed to load models');
+    }
+  } catch (e) {
+    showModelError('Error: ' + (e.message || e));
+  }
+}
 
 // ─── Model selector ───
 let highlightIndex = -1;

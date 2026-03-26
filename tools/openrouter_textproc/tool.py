@@ -37,13 +37,12 @@ MAX_CONVERSATION_TURNS = 20  # keep last N assistant turns to bound history size
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _api_request(url: str, api_key: str, method: str = "GET",
+def _api_request(url: str, api_key: str = None, method: str = "GET",
                  payload: dict = None, timeout: int = 180) -> dict:
     """Make an HTTP request to OpenRouter and return parsed JSON."""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     data = json.dumps(payload).encode() if payload else None
     req = Request(url, data=data, headers=headers, method=method)
 
@@ -118,14 +117,13 @@ def list_models(context: dict) -> dict:
             except Exception:
                 pass  # bad cache, re-fetch
 
+    # The /models endpoint is public — API key is optional here
     api_key = context["secrets"].get("OPENROUTER_KEY")
-    if not api_key:
-        return {"message": "Error: OPENROUTER_KEY not set. Add it via the Secrets panel."}
 
     try:
         resp = _api_request(
             "https://openrouter.ai/api/v1/models",
-            api_key,
+            api_key=api_key,
             timeout=30,
         )
     except Exception as e:
