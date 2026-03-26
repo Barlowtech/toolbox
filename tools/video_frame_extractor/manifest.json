@@ -1,0 +1,72 @@
+{
+  "name": "Video Frame Extractor",
+  "description": "Extract frames from any video file at configurable intervals. Supports start/end time ranges, multiple output formats, and custom frame rates.",
+  "category": "media",
+  "icon": "media",
+  "version": "1.0",
+  "params": [
+    {
+      "name": "video_path",
+      "type": "file",
+      "label": "Video File",
+      "required": true,
+      "placeholder": "/path/to/video.mp4",
+      "hint": "Full path to the video file on your computer."
+    },
+    {
+      "name": "every_n",
+      "type": "number",
+      "label": "Extract every Nth frame",
+      "default": 10,
+      "min": 1,
+      "max": 1000,
+      "hint": "1 = every frame, 10 = every 10th frame, etc."
+    },
+    {
+      "name": "format",
+      "type": "select",
+      "label": "Output Format",
+      "options": ["jpg", "png", "bmp"],
+      "default": "jpg"
+    },
+    {
+      "name": "quality",
+      "type": "number",
+      "label": "JPEG Quality (1-100)",
+      "default": 95,
+      "min": 1,
+      "max": 100,
+      "hint": "Only applies to JPG output. Higher = better quality, larger files."
+    },
+    {
+      "name": "start_time",
+      "type": "text",
+      "label": "Start Time (optional)",
+      "placeholder": "00:00:00 or seconds (e.g. 30)",
+      "hint": "Leave blank to start from beginning."
+    },
+    {
+      "name": "end_time",
+      "type": "text",
+      "label": "End Time (optional)",
+      "placeholder": "00:01:30 or seconds (e.g. 90)",
+      "hint": "Leave blank to extract until end of video."
+    },
+    {
+      "name": "max_frames",
+      "type": "number",
+      "label": "Max Frames (0 = unlimited)",
+      "default": 0,
+      "min": 0,
+      "hint": "Safety limit. 0 means no limit."
+    },
+    {
+      "name": "resize_width",
+      "type": "number",
+      "label": "Resize Width (0 = original)",
+      "default": 0,
+      "min": 0,
+      "hint": "Resize frames to this width (maintains aspect ratio). 0 keeps original size."
+    }
+  ]
+}
